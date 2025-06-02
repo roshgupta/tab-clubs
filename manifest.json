@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Clubs",
+  "version": "1.0",
+  "description": "A simple chrome extension to club similar tabs together to make our life easier. Group tabs by category, custom name, and hostname - smartly.",
+  "permissions": [
+    "tabs",
+    "tabGroups"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Tab Clubs",
+    "default_icon": "icons/icon48.png"
+  },
+  "icons": {
+    "48": "icons/icon48.png"
+  }
+}
