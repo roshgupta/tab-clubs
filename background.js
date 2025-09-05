@@ -1,3 +1,5 @@
+const DEFAULT_COLORS = ["blue", "green", "red", "yellow", "purple"];
+
 const configuration = {
   minTabCount: 2,
   tabGroupCustomNames: [
@@ -6,11 +8,15 @@ const configuration = {
     { group: "news", domain: ["bbc.com", "cnn.com", "nytimes.com"], color: "red", },
   ],
   doNotGroupDomains: ["google.com"],
-  colorIndex: 0,
   alreadyGroupedTabs: new Set(),
 };
 
-const DEFAULT_COLORS = ["blue", "green", "red", "yellow", "purple"];
+let colorIndex = 0;
+function getNextColor() {
+  return DEFAULT_COLORS[colorIndex++ % DEFAULT_COLORS.length];
+}
+
+
 
 // Build lookup for faster group matching
 const domainToGroup = new Map();
@@ -41,7 +47,7 @@ function getGroupInfo(host) {
 
   return {
     group: host.split(".")[0],
-    color: DEFAULT_COLORS[configuration.colorIndex++ % DEFAULT_COLORS.length],
+    color: getNextColor(),
   }
 }
 
