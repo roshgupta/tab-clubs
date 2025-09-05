@@ -1,180 +1,145 @@
 const configuration = {
   minTabCount: 2,
   tabGroupCustomNames: [
-    {
-      group: "github",
-      domain: ["github.com"],
-      color: "blue",
-    },
-    {
-      group: "social",
-      domain: [
-        "facebook.com",
-        "twitter.com",
-        "instagram.com",
-        "linkedin.com",
-        "x.com",
-      ],
-      color: "green",
-    },
-    {
-      group: "news",
-      domain: ["bbc.com", "cnn.com", "nytimes.com"],
-      color: "red",
-    },
+    { group: "github", domain: ["github.com"], color: "blue", },
+    { group: "social", domain: ["facebook.com", "twitter.com", "instagram.com", "linkedin.com", "x.com", "reddit.com"], color: "green", },
+    { group: "news", domain: ["bbc.com", "cnn.com", "nytimes.com"], color: "red", },
   ],
   doNotGroupDomains: ["google.com"],
   colorIndex: 0,
-  alreadyGroupedTabs: [],
+  alreadyGroupedTabs: new Set(),
 };
 
 const DEFAULT_COLORS = ["blue", "green", "red", "yellow", "purple"];
 
+// Build lookup for faster group matching
+const domainToGroup = new Map();
+for (const g of configuration.tabGroupCustomNames) {
+  g.domain.forEach(d => domainToGroup.set(d, g));
+}
+
 function extractHost(url) {
-  if (!url) return null;
   try {
-    const urlObj = new URL(url);
-    return urlObj.hostname.replace(/^www\./, "");
-  } catch (error) {
-    console.error("Invalid URL:", url, error);
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
     return null;
   }
 }
 
-function validateTab(tab) {
-  if (!tab) return true;
-  return (
-    !tab.url ||
-    tab.url.startsWith("chrome://") ||
-    tab.url == "chrome://newtab" ||
-    tab.url === "about:blank" ||
-    configuration.doNotGroupDomains.includes(extractHost(tab.url))
-  );
+
+function shouldSkipTab(tab) {
+  if (!tab?.url) return true;
+  if (tab.url.startsWith("chrome://") || tab.url === "about:blank") return true;
+
+  const host = extractHost(tab.url);
+  return !host || configuration.doNotGroupDomains.includes(host);
 }
 
-function findGroupByDomain(host) {
-  for (let group of configuration.tabGroupCustomNames) {
-    if (group.domain.includes(host)) {
-      return group;
-    }
+function getGroupInfo(host) {
+  const matchedGroup = domainToGroup.get(host);
+  if (matchedGroup) return { group: matchedGroup.group, color: matchedGroup.color };
+
+  return {
+    group: host.split(".")[0],
+    color: DEFAULT_COLORS[configuration.colorIndex++ % DEFAULT_COLORS.length],
   }
-  return null;
+}
+
+async function groupTabs(tabs, host) {
+  if (tabs.length < configuration.minTabCount) return;
+
+  const { group, color } = getGroupInfo(host);
+  const tabIds = tabs.map(t => t.id);
+
+  const groupId = await chrome.tabs.group({ tabIds });
+  await chrome.tabGroups.update(groupId, { title: group, color });
 }
 
 async function handleTab(tab) {
-  if (validateTab(tab)) return;
+  if (shouldSkipTab(tab)) return;
 
   const host = extractHost(tab.url);
-  if (!host || configuration.doNotGroupDomains.includes(host)) return;
+  if (!host) return;
 
-  const matchedGroup = findGroupByDomain(host);
-  const groupName = matchedGroup ? matchedGroup.group : host.split(".")[0];
-  const groupColor = matchedGroup
-    ? matchedGroup.color
-    : DEFAULT_COLORS[configuration.colorIndex++ % DEFAULT_COLORS.length];
+  const { group, color } = getGroupInfo(host);
+  const allTabs = await chrome.tabs.query({ windowId: tab.windowId });
 
-  const allTabs = await chrome.tabs.query({
-    windowId: tab.windowId,
-  });
-  const relevantTabs = allTabs.filter((t) => {
-    const tHost = extractHost(t.url);
-    if (!tHost) return false;
-
-    if (matchedGroup) {
-      return matchedGroup.domain.includes(tHost);
-    } else {
-      return tHost === host;
-    }
+  const relevant = allTabs.filter(t => {
+    const h = extractHost(t.url);
+    return h && getGroupInfo(h).group === group;
   });
 
-  if (relevantTabs.length < configuration.minTabCount) return;
-
-  const tabIds = relevantTabs.map((t) => t.id);
-  const groupId = await chrome.tabs.group({ tabIds });
-
-  chrome.tabGroups.update(groupId, { title: groupName, color: groupColor });
-}
-
-async function collapseTabGroup() {
-  const tabGroups = await chrome.tabGroups.query({});
-  for (const group of tabGroups) {
-    await chrome.tabGroups.update(group.id, { collapsed: true });
+  if (relevant.length >= configuration.minTabCount) {
+    const tabIds = relevant.map(t => t.id);
+    const groupId = await chrome.tabs.group({ tabIds });
+    await chrome.tabGroups.update(groupId, { title: group, color });
   }
 }
-
-async function expandAllGroup() {
-  const tabGroups = await chrome.tabGroups.query({});
-  for (const group of tabGroups) {
-    await chrome.tabGroups.update(group.id, { collapsed: false });
-  }
-}
-
-let debounceTimer = null;
-const DEBOUNCE_DELAY = 1000;
-function debounceHandleTab(tab) {
-  if (debounceTimer) clearTimeout(debounceTimer);
-
-  debounceTimer = setTimeout(() => {
-    handleTab(tab);
-    debounceTimer = null;
-  }, DEBOUNCE_DELAY);
-}
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete") handleTab(tab);
-});
-
-chrome.tabs.onCreated.addListener((tab) => {
-  if (
-    tab.status === "complete" &&
-    tab.url &&
-    !tab.url.startsWith("chrome://")
-  )
-    handleTab(tab);
-});
 
 async function groupAllTabs() {
-  const tabs = await chrome.tabs.query({});
+  const tabs = (await chrome.tabs.query({})).filter(t => !shouldSkipTab(t));
 
+  // Bucket tabs by host
+  const groupBuckets = {};
   for (const tab of tabs) {
-    if (validateTab(tab)) continue;
     const host = extractHost(tab.url);
     if (!host) continue;
 
-    const matchedGroup = findGroupByDomain(host);
-    const groupName = matchedGroup ? matchedGroup.group : host.split(".")[0];
-    const groupColor = matchedGroup
-      ? matchedGroup.color
-      : DEFAULT_COLORS[configuration.colorIndex++ % DEFAULT_COLORS.length];
-    const relevantTabs = tabs.filter((t) => {
-      const tHost = extractHost(t.url);
-      if (!tHost) return false;
+    const { group, color } = getGroupInfo(host);
+    (groupBuckets[group] ||= { tabs: [], color }).tabs.push(tab);
+  }
 
-      if (matchedGroup) {
-        return matchedGroup.domain.includes(tHost);
-      } else {
-        return tHost === host;
-      }
-    });
-    if (relevantTabs.length < configuration.minTabCount) continue;
-
-    const tabIds = relevantTabs.map((t) => t.id);
-    const groupId = await chrome.tabs.group({ tabIds });
-    chrome.tabGroups.update(groupId, {
-      title: groupName,
-      color: groupColor,
-      collapsed: true,
-    });
+  // Group per group name
+  for (const [group, { tabs: bucket, color }] of Object.entries(groupBuckets)) {
+    if (bucket.length >= configuration.minTabCount) {
+      const tabIds = bucket.map(t => t.id);
+      const groupId = await chrome.tabs.group({ tabIds });
+      await chrome.tabGroups.update(groupId, { title: group, color, collapsed: true });
+    }
   }
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+// Collapse / expand
+async function setGroupCollapse(collapsed) {
+  const tabGroups = await chrome.tabGroups.query({});
+  await Promise.all(
+    tabGroups.map(group => chrome.tabGroups.update(group.id, { collapsed }))
+  );
+}
+
+
+
+// Debounce wrapper
+let debounceTimer = null;
+const DEBOUNCE_DELAY = 500;
+function debounce(fn, ...args) {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => fn(...args), DEBOUNCE_DELAY);
+}
+
+
+// Event listeners
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete") debounce(handleTab, tab);
+});
+
+chrome.tabs.onCreated.addListener(tab => {
+  if (tab.status === "complete" && tab.url && !tab.url.startsWith("chrome://")) {
+    debounce(handleTab, tab);
+  }
+});
+
+// Message handling
+chrome.runtime.onMessage.addListener((message) => {
   switch (message.action) {
     case "groupTabs":
-      groupAllTabs(); // You already have logic for grouping
+      groupAllTabs();
       break;
     case "collapseGroups":
-      collapseTabGroup();
+      setGroupCollapse(true);
+      break;
+    case "expandGroups":
+      setGroupCollapse(false);
       break;
   }
 });

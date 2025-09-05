@@ -5,3 +5,9 @@ document.getElementById("groupTabs").addEventListener("click", () => {
 document.getElementById("collapseGroups").addEventListener("click", () => {
   chrome.runtime.sendMessage({ action: "collapseGroups" });
 });
+
+document.getElementById("expandGroups").addEventListener("click", () => {
+  chrome.runtime.sendMessage({ action: "expandGroups" });
+});
+
+
