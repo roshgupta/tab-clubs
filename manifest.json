@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Tabs",
+  "name": "Tab Clubs",
   "version": "1.0",
   "description": "A simple chrome extension to club similar tabs together to make our life easier. Group tabs by category, custom name, and hostname - smartly.",
   "permissions": [
@@ -10,6 +10,10 @@
   ],
   "background": {
     "service_worker": "background.js"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "action": {
     "default_title": "Tabs",

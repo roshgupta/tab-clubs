@@ -1,6 +1,6 @@
 const DEFAULT_COLORS = ["blue", "green", "red", "yellow", "purple"];
 
-const configuration = {
+const DEFAULT_CONFIGURATION = {
   minTabCount: 2,
   tabGroupCustomNames: [
     { group: "github", domain: ["github.com"], color: "blue", },
@@ -8,20 +8,52 @@ const configuration = {
     { group: "news", domain: ["bbc.com", "cnn.com", "nytimes.com"], color: "red", },
   ],
   doNotGroupDomains: ["google.com"],
-  alreadyGroupedTabs: new Set(),
 };
 
+let currentConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIGURATION));
 let colorIndex = 0;
-function getNextColor() {
-  return DEFAULT_COLORS[colorIndex++ % DEFAULT_COLORS.length];
+const domainToGroup = new Map();
+const alreadyGroupedTabs = new Set();
+
+function rebuildDomainToGroup() {
+  domainToGroup.clear();
+  for (const g of currentConfig.tabGroupCustomNames) {
+    g.domain.forEach(d => domainToGroup.set(d, g));
+  }
 }
 
+function loadConfigFromStorage() {
+  chrome.storage.sync.get(['configuration', 'colorIndex'], (items) => {
+    if (chrome.runtime.lastError) {
+      console.error('Failed to read config from storage', chrome.runtime.lastError);
+    }
 
+    if (items.configuration) {
+      currentConfig = items.configuration;
+    } else {
+      // first-run: populate storage with defaults so options page sees them
+      chrome.storage.sync.set({ configuration: DEFAULT_CONFIGURATION }, () => { });
+      currentConfig = DEFAULT_CONFIGURATION;
+    }
 
-// Build lookup for faster group matching
-const domainToGroup = new Map();
-for (const g of configuration.tabGroupCustomNames) {
-  g.domain.forEach(d => domainToGroup.set(d, g));
+    colorIndex = (typeof items.colorIndex === 'number') ? items.colorIndex : 0;
+    rebuildDomainToGroup();
+  });
+}
+
+function saveColorIndexToStorage() {
+  try {
+    chrome.storage.sync.set({ colorIndex });
+  } catch (e) {
+    console.warn('Could not persist colorIndex', e);
+  }
+}
+
+function getNextColor() {
+  const color = DEFAULT_COLORS[colorIndex % DEFAULT_COLORS.length];
+  colorIndex++;
+  saveColorIndexToStorage();
+  return color;
 }
 
 function extractHost(url) {
@@ -38,7 +70,7 @@ function shouldSkipTab(tab) {
   if (tab.url.startsWith("chrome://") || tab.url === "about:blank") return true;
 
   const host = extractHost(tab.url);
-  return !host || configuration.doNotGroupDomains.includes(host);
+  return !host || (currentConfig.doNotGroupDomains || []).includes(host);
 }
 
 function getGroupInfo(host) {
@@ -52,7 +84,7 @@ function getGroupInfo(host) {
 }
 
 async function groupTabs(tabs, host) {
-  if (tabs.length < configuration.minTabCount) return;
+  if (tabs.length < (currentConfig.minTabCount || 3)) return;
 
   const { group, color } = getGroupInfo(host);
   const tabIds = tabs.map(t => t.id);
@@ -75,7 +107,7 @@ async function handleTab(tab) {
     return h && getGroupInfo(h).group === group;
   });
 
-  if (relevant.length >= configuration.minTabCount) {
+  if (relevant.length >= (currentConfig.minTabCount || 3)) {
     const tabIds = relevant.map(t => t.id);
     const groupId = await chrome.tabs.group({ tabIds });
     await chrome.tabGroups.update(groupId, { title: group, color });
@@ -97,7 +129,7 @@ async function groupAllTabs() {
 
   // Group per group name
   for (const [group, { tabs: bucket, color }] of Object.entries(groupBuckets)) {
-    if (bucket.length >= configuration.minTabCount) {
+    if (bucket.length >= (currentConfig.minTabCount || 3)) {
       const tabIds = bucket.map(t => t.id);
       const groupId = await chrome.tabs.group({ tabIds });
       await chrome.tabGroups.update(groupId, { title: group, color, collapsed: true });
@@ -135,17 +167,55 @@ chrome.tabs.onCreated.addListener(tab => {
   }
 });
 
-// Message handling
-chrome.runtime.onMessage.addListener((message) => {
-  switch (message.action) {
-    case "groupTabs":
-      groupAllTabs();
-      break;
-    case "collapseGroups":
-      setGroupCollapse(true);
-      break;
-    case "expandGroups":
-      setGroupCollapse(false);
-      break;
+// Listen to storage changes (in case options page edited configuration)
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'sync') return;
+  if (changes.configuration) {
+    currentConfig = changes.configuration.newValue;
+    rebuildDomainToGroup();
+  }
+  if (changes.colorIndex) {
+    colorIndex = changes.colorIndex.newValue;
   }
 });
+
+
+// Message handling — options page can call getConfiguration / saveConfiguration
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  switch (message.action) {
+    case 'groupTabs':
+      groupAllTabs();
+      break;
+    case 'collapseGroups':
+      setGroupCollapse(true);
+      break;
+    case 'expandGroups':
+      setGroupCollapse(false);
+      break;
+    case 'getConfiguration':
+      // return current configuration and runtime-only values
+      sendResponse({ configuration: currentConfig, colorIndex });
+      break;
+    case 'saveConfiguration':
+      if (message.configuration) {
+        currentConfig = message.configuration;
+        rebuildDomainToGroup();
+        chrome.storage.sync.set({ configuration: currentConfig }, () => {
+          sendResponse({ success: true });
+        });
+        return true; // will respond asynchronously
+      }
+      sendResponse({ success: false, error: 'missing configuration' });
+      break;
+    case 'resetConfiguration':
+      currentConfig = DEFAULT_CONFIGURATION;
+      rebuildDomainToGroup();
+      chrome.storage.sync.set({ configuration: currentConfig }, () => {
+        sendResponse({ success: true, configuration: currentConfig });
+      });
+      return true; // keep channel open for async sendResponse
+  }
+});
+
+// Initialize on load
+loadConfigFromStorage();

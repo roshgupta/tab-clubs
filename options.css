@@ -1,0 +1,146 @@
+/* Base styling */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  background: #f9fafb;
+  color: #333;
+  margin: 0;
+  padding: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-top: 2rem;
+  margin-bottom: 0.8rem;
+  color: #334155;
+}
+
+/* Labels and inputs */
+label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  margin-top: 0.4rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: none;
+}
+
+/* Group rows */
+.group-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 120px auto;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  padding: 0.8rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.group-row:hover {
+  transform: scale(1.01);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.group-row input,
+.group-row select {
+  font-size: 0.9rem;
+}
+
+/* Buttons */
+button {
+  appearance: none;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Specific button styles */
+button#addGroup {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+button#addGroup:hover {
+  background: #bae6fd;
+}
+
+button#saveBtn {
+  background: #3b82f6;
+  color: #fff;
+}
+
+button#saveBtn:hover {
+  background: #2563eb;
+}
+
+button#resetDefault {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+button#resetDefault:hover {
+  background: #fee2e2;
+}
+
+.group-row button {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.group-row button:hover {
+  background: #e2e8f0;
+}
+
+/* Controls container */
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
