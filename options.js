@@ -131,7 +131,7 @@ $('exportBtn').addEventListener('click', () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(resp.configuration, null, 2));
     const dl = document.createElement('a');
     dl.setAttribute("href", dataStr);
-    dl.setAttribute("download", "tab-clubs-config.json");
+    dl.setAttribute("download", "clubby-configuration.json");
     dl.click();
   });
 });
