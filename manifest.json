@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Tab Clubs",
+  "name": "Clubby - Tab Groups",
   "version": "1.0",
   "description": "A simple chrome extension to club similar tabs together to make our life easier. Group tabs by category, custom name, and hostname - smartly.",
   "permissions": [
@@ -16,8 +16,8 @@
     "open_in_tab": true
   },
   "action": {
-    "default_title": "Tabs",
-    "default_icon": "icons/logo1080.png",
+    "default_title": "Clubby",
+    "default_icon": "icons/logo48.png",
     "default_popup": "popup.html"
   },
   "icons": {
