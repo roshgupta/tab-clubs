@@ -21,6 +21,9 @@
     "default_popup": "popup.html"
   },
   "icons": {
-    "48": "icons/final.png"
+    "16": "icons/final.png",
+    "32": "icons/final.png",
+    "48": "icons/final.png",
+    "1080": "icons/final.png"
   }
 }
