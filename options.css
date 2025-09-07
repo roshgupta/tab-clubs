@@ -38,6 +38,7 @@ label {
   font-weight: 500;
   color: #475569;
   width: 100%;
+  max-width: 800px;
 }
 input {
   width: 100%;
