@@ -94,6 +94,8 @@ async function groupTabs(tabs, host) {
 }
 
 async function handleTab(tab) {
+  console.log('handleTab called');
+  console.log(Date.now());
   if (shouldSkipTab(tab)) return;
 
   const host = extractHost(tab.url);
@@ -147,6 +149,8 @@ async function setGroupCollapse(collapsed) {
 
 
 function debounce(fn, delay = 500) {
+  console.log('debounce called');
+  console.log(Date.now());
   let timer = null;
   return function (...args) {
     clearTimeout(timer);
