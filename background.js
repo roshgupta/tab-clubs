@@ -159,6 +159,7 @@ function debounce(fn, delay = 500) {
 }
 
 const debouncedHandleTab = debounce(handleTab, 500);
+const debouncedGroupAllTabs = debounce(groupAllTabs, 800);
 
 // Event listeners
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -188,7 +189,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
     case 'groupTabs':
-      groupAllTabs();
+      debouncedGroupAllTabs();
       break;
     case 'collapseGroups':
       setGroupCollapse(true);
