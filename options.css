@@ -36,6 +36,10 @@ label {
   margin-bottom: 1rem;
   font-weight: 500;
   color: #475569;
+  width: 100%;
+}
+input {
+  width: 100%;
 }
 
 input[type="number"],
