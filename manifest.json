@@ -17,10 +17,10 @@
   },
   "action": {
     "default_title": "Tabs",
-    "default_icon": "icons/logo.png",
+    "default_icon": "icons/final.png",
     "default_popup": "popup.html"
   },
   "icons": {
-    "48": "icons/logo.png"
+    "48": "icons/final.png"
   }
 }
