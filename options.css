@@ -27,6 +27,9 @@ h3 {
   color: #334155;
 }
 
+section {
+  max-width: 800px;
+}
 /* Labels and inputs */
 label {
   display: block;
