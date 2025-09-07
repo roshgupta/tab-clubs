@@ -155,6 +155,13 @@ function debounce(fn, ...args) {
   debounceTimer = setTimeout(() => fn(...args), DEBOUNCE_DELAY);
 }
 
+function debounce(fn, delay = 500) {
+  let timer = null;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  }
+}
 
 // Event listeners
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
