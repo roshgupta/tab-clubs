@@ -9,6 +9,7 @@ body {
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  box-sizing: border-box;
 }
 
 h1 {
@@ -40,6 +41,7 @@ label {
 }
 input {
   width: 100%;
+  max-width: 800px;
 }
 
 input[type="number"],
