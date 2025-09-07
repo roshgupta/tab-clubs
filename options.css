@@ -146,3 +146,29 @@ button#resetDefault:hover {
   gap: 1rem;
   margin-top: 1.5rem;
 }
+
+.import-export {
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.import-export button {
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.import-export button:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
