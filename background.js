@@ -158,12 +158,12 @@ const debouncedHandleTab = debounce(handleTab, 500);
 
 // Event listeners
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete") debounce(handleTab, tab);
+  if (changeInfo.status === "complete") debouncedHandleTab(tab);
 });
 
 chrome.tabs.onCreated.addListener(tab => {
   if (tab.status === "complete" && tab.url && !tab.url.startsWith("chrome://")) {
-    debounce(handleTab, tab);
+    debouncedHandleTab(tab);
   }
 });
 
