@@ -8,23 +8,27 @@
 </head>
 
 <body>
-  <h1>Tab Clubs — Options</h1>
+  <section>
 
-  <label>Minimum tabs to auto-group
-    <input id="minTabCount" type="number" min="1" class="small" />
-  </label>
 
-  <label>Do-not-group domains (comma-separated)
-    <input id="doNotGroupDomains" type="text" placeholder="example.com,another.com" />
-  </label>
+    <h1>Tab Clubs — Options</h1>
 
-  <h3>Custom groups</h3>
-  <div id="groupsContainer"></div>
-  <div class="controls">
-    <button id="addGroup">+ Add group</button>
-    <button id="saveBtn">Save</button>
-    <button id="resetDefault">Reset to defaults</button>
-  </div>
+    <label>Minimum tabs to auto-group
+      <input id="minTabCount" type="number" min="1" class="small" />
+    </label>
+
+    <label>Do-not-group domains (comma-separated)
+      <input id="doNotGroupDomains" type="text" placeholder="example.com,another.com" />
+    </label>
+
+    <h3>Custom groups</h3>
+    <div id="groupsContainer"></div>
+    <div class="controls">
+      <button id="addGroup">+ Add group</button>
+      <button id="saveBtn">Save</button>
+      <button id="resetDefault">Reset to defaults</button>
+    </div>
+  </section>
 
   <script src="options.js"></script>
 </body>
