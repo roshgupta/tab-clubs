@@ -159,7 +159,7 @@ function debounce(fn, delay = 500) {
 }
 
 const debouncedHandleTab = debounce(handleTab, 500);
-const debouncedGroupAllTabs = debounce(groupAllTabs, 800);
+const debouncedGroupAllTabs = debounce(groupAllTabs, 2000);
 
 // Event listeners
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
