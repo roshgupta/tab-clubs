@@ -104,3 +104,74 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   });
 });
+
+
+// Utility: validate configuration shape
+function isValidConfiguration(obj) {
+  if (typeof obj !== 'object' || obj === null) return false;
+  if (typeof obj.minTabCount !== 'number') return false;
+  if (!Array.isArray(obj.doNotGroupDomains)) return false;
+  if (!Array.isArray(obj.tabGroupCustomNames)) return false;
+
+  for (const g of obj.tabGroupCustomNames) {
+    if (typeof g.group !== 'string') return false;
+    if (!Array.isArray(g.domain)) return false;
+    if (typeof g.color !== 'string') return false;
+  }
+  return true;
+}
+
+// Export configuration to JSON file
+$('exportBtn').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ action: 'getConfiguration' }, (resp) => {
+    if (!resp || !resp.configuration) {
+      alert('Failed to fetch configuration');
+      return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(resp.configuration, null, 2));
+    const dl = document.createElement('a');
+    dl.setAttribute("href", dataStr);
+    dl.setAttribute("download", "tab-clubs-config.json");
+    dl.click();
+  });
+});
+
+// Trigger file input for import
+$('importBtn').addEventListener('click', () => {
+  $('importFile').click();
+});
+
+// Handle file import
+$('importFile').addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.type !== "application/json" && !file.name.endsWith(".json")) {
+    alert("Please select a valid JSON file");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const obj = JSON.parse(e.target.result);
+      if (!isValidConfiguration(obj)) {
+        alert("Invalid configuration format");
+        return;
+      }
+
+      // Save imported config
+      chrome.runtime.sendMessage({ action: 'saveConfiguration', configuration: obj }, (resp) => {
+        if (resp && resp.success) {
+          loadConfigurationToUI(obj); // refresh UI
+          alert("Configuration imported successfully!");
+        } else {
+          alert("Failed to save configuration");
+        }
+      });
+    } catch (err) {
+      alert("Error parsing JSON file: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
