@@ -27,21 +27,13 @@ h3 {
   color: #334155;
 }
 
-section {
-  max-width: 800px;
-}
 /* Labels and inputs */
 label {
   display: block;
   margin-bottom: 1rem;
   font-weight: 500;
   color: #475569;
-  width: 100%;
-  max-width: 800px;
-}
-
-input {
-  display: block;
+  max-width: 100%;
 }
 
 input[type="number"],
@@ -50,6 +42,7 @@ select {
   width: 100%;
   padding: 0.6rem 0.8rem;
   margin-top: 0.4rem;
+  box-sizing: border-box; /* <-- important */
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 0.95rem;
