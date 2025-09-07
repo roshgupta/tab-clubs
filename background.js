@@ -146,15 +146,6 @@ async function setGroupCollapse(collapsed) {
 }
 
 
-
-// Debounce wrapper
-let debounceTimer = null;
-const DEBOUNCE_DELAY = 500;
-function debounce(fn, ...args) {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => fn(...args), DEBOUNCE_DELAY);
-}
-
 function debounce(fn, delay = 500) {
   let timer = null;
   return function (...args) {
@@ -162,6 +153,8 @@ function debounce(fn, delay = 500) {
     timer = setTimeout(() => fn.apply(this, args), delay);
   }
 }
+
+const debouncedHandleTab = debounce(handleTab, 500);
 
 // Event listeners
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
