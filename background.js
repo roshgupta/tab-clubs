@@ -94,8 +94,6 @@ async function groupTabs(tabs, host) {
 }
 
 async function handleTab(tab) {
-  console.log('handleTab called');
-  console.log(Date.now());
   if (shouldSkipTab(tab)) return;
 
   const host = extractHost(tab.url);
@@ -149,8 +147,6 @@ async function setGroupCollapse(collapsed) {
 
 
 function debounce(fn, delay = 500) {
-  console.log('debounce called');
-  console.log(Date.now());
   let timer = null;
   return function (...args) {
     clearTimeout(timer);
@@ -159,7 +155,8 @@ function debounce(fn, delay = 500) {
 }
 
 const debouncedHandleTab = debounce(handleTab, 500);
-const debouncedGroupAllTabs = debounce(groupAllTabs, 2000);
+const debouncedGroupAllTabs = debounce(groupAllTabs, 800);
+const debounceSetGroupCollapse = debounce(setGroupCollapse, 300);
 
 // Event listeners
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -192,10 +189,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       debouncedGroupAllTabs();
       break;
     case 'collapseGroups':
-      setGroupCollapse(true);
+      debounceSetGroupCollapse(true);
       break;
     case 'expandGroups':
-      setGroupCollapse(false);
+      debounceSetGroupCollapse(false);
       break;
     case 'getConfiguration':
       // return current configuration and runtime-only values
